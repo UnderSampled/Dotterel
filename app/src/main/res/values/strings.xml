@@ -38,12 +38,16 @@
     <string name="keyboard_magnifier">Keyboard Magnifier</string>
     <string name="pref_zoom_enabled">pref_zoom_enabled</string>
     <string name="pref_optimizer_enabled">pref_optimizer_enabled</string>
+    <string name="prefs_tts_enabled">pref_tts_enabled</string>
     <string name="hardware">Hardware</string>
+    <string name="tts">Text to Speech</string>
     <string name="pref_kbd_enabled">pref_kbd_enabled</string>
+    <string name="pref_tts_enabled">pref_tts_enabled</string>
     <string name="dictionary">Dictionary</string>
     <string name="pref_dictionary_button">pref_dictionary_button</string>
     <string name="edit_dictionaries">Edit Dictionaries</string>
     <string name="enable_nkro_keyboard">Enable NKRO Keyboard</string>
+    <string name="enable_tts">Speak text as I type</string>
     <string name="preview_on_summary">Ambiguous (preview) words will be shown after regular text.\n</string>
     <string name="preview_off_summary">Ambiguous words will be shown above the keyboard.\n</string>
     <string name="optimizer_off_summary">Do not provide stroke suggestions.</string>

@@ -45,4 +45,10 @@
             android:defaultValue="false"/>
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/tts">
+        <SwitchPreference android:key="@string/pref_tts_enabled"
+                          android:title="@string/enable_tts"
+                          android:defaultValue="false"/>
+    </PreferenceCategory>
+
 </PreferenceScreen>

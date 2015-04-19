@@ -27,9 +27,9 @@ public class SettingsActivity extends PreferenceActivity {
     private static final int PURCHASE_REQUEST_CODE = 20201;
     private static final String PAYLOAD = "jOOnnqldcn20p843nKK;nNl";
 
-
     private StenoApp App;
     private SwitchPreference keyboardSwitch;
+    private SwitchPreference ttsSwitch;
     private IabHelper iabHelper;
     private IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListner;
 
@@ -138,7 +138,15 @@ public class SettingsActivity extends PreferenceActivity {
                 }
             }
         });
-
+        ttsSwitch = (SwitchPreference) findPreference("pref_tts_enabled");
+        ttsSwitch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                boolean switched = (Boolean) o;
+                App.setTts(switched);
+                return switched;
+            }
+        });
     }
 
     private String getDictionaryList() {
@@ -157,8 +165,6 @@ public class SettingsActivity extends PreferenceActivity {
         }
         return dictionaryList.toString();
     }
-
-
 
     private void setupPurchaseListener() {
         mPurchaseFinishedListner = new IabHelper.OnIabPurchaseFinishedListener() {

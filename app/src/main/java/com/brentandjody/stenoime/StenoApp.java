@@ -46,6 +46,7 @@ public class StenoApp extends Application {
     private boolean nkro_enabled = false;
     private boolean txbolt_enabled = false;
     private boolean optimizer_enabled = false;
+    private boolean tts_enabled = false;
 
     private static final boolean NO_PURCHASES_NECESSARY=true;
     private static final boolean RESET_PURCHASES_FOR_TESTING =false;
@@ -57,6 +58,7 @@ public class StenoApp extends Application {
         mDictionary = new Dictionary(getApplicationContext());
         nkro_enabled = prefs.getBoolean(getString(R.string.pref_kbd_enabled), false);
         optimizer_enabled = prefs.getBoolean(getString(R.string.pref_optimizer_enabled), false);
+        tts_enabled = prefs.getBoolean(getString(R.string.pref_optimizer_enabled), false);
         int val = Integer.parseInt(prefs.getString(getString(R.string.pref_translator), "1"));
         mTranslatorType = Translator.TYPE.values()[val];
         mMachineType = StenoMachine.TYPE.VIRTUAL;
@@ -104,6 +106,10 @@ public class StenoApp extends Application {
         NKRO_KEYBOARD_PURCHASED = purchased;
     }
     public void setOptimizerEnabled(boolean setting) {optimizer_enabled = setting; }
+    public void setTts(boolean enabled){
+        tts_enabled = enabled;
+        prefs.edit().putBoolean(getString(R.string.pref_tts_enabled), enabled);
+    }
 
     // Getters
     public StenoMachine getInputDevice() {return mInputDevice; }
@@ -121,6 +127,7 @@ public class StenoApp extends Application {
     }
     public boolean isOptimizerEnabled() {return optimizer_enabled;}
     public IabHelper getIabHelper() {return iabHelper;}
+    public boolean getTts(){ return tts_enabled; }
 
     public Dictionary getDictionary(Dictionary.OnDictionaryLoadedListener listener) {
         // if dictionary is empty, load it - otherwise just return it

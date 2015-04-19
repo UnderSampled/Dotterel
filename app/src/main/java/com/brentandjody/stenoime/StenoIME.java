@@ -626,7 +626,7 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         String text = tr.getText();
         connection.commitText(text, 1);
         stats.addLetters(text.length());
-        if (!text.equals("")){
+        if (App.getTts() && !text.equals("")){
             mCurrentSentence.append(text);
             boolean endSentence = false;
             for (String endChar : mSentenceEndCharacters){
