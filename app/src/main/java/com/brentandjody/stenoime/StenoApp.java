@@ -58,7 +58,7 @@ public class StenoApp extends Application {
         mDictionary = new Dictionary(getApplicationContext());
         nkro_enabled = prefs.getBoolean(getString(R.string.pref_kbd_enabled), false);
         optimizer_enabled = prefs.getBoolean(getString(R.string.pref_optimizer_enabled), false);
-        tts_enabled = prefs.getBoolean(getString(R.string.pref_optimizer_enabled), false);
+        tts_enabled = prefs.getBoolean(getString(R.string.pref_tts_enabled), false);
         int val = Integer.parseInt(prefs.getString(getString(R.string.pref_translator), "1"));
         mTranslatorType = Translator.TYPE.values()[val];
         mMachineType = StenoMachine.TYPE.VIRTUAL;
