@@ -475,15 +475,16 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
     }
 
     private boolean isKeyboardConnected() {
-        Configuration config = getResources().getConfiguration();
-        return (App.isNkro_enabled()
-                && config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO
-                && config.keyboard == Configuration.KEYBOARD_QWERTY);
+        //Configuration config = getResources().getConfiguration();
+        return (App.isNkro_enabled());
+        //Android 5.1 Cyanogenmod these aren't working when keyboard present
+                //&& config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO
+                //&& config.keyboard == Configuration.KEYBOARD_QWERTY);
     }
 
     private void initializeMachine() {
         Log.d(TAG, "initializeMachine()");
-        if (isKeyboardConnected() || true) {
+        if (isKeyboardConnected()) {
             setMachineType(StenoMachine.TYPE.KEYBOARD);
         } else {
             setMachineType(StenoMachine.TYPE.VIRTUAL);
