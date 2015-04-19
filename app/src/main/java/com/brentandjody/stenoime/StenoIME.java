@@ -15,6 +15,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.inputmethodservice.InputMethodService;
 import android.preference.PreferenceManager;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -42,11 +43,14 @@ import com.brentandjody.stenoime.Translator.SimpleTranslator;
 import com.brentandjody.stenoime.Translator.Stroke;
 import com.brentandjody.stenoime.Translator.TranslationResult;
 import com.brentandjody.stenoime.Translator.Translator;
-import com.brentandjody.stenoime.data.StatsTableHelper;
 import com.brentandjody.stenoime.data.DBContract.StatsEntry;
+import com.brentandjody.stenoime.data.StatsTableHelper;
 import com.brentandjody.stenoime.performance.PerformanceItem;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -54,7 +58,7 @@ import java.util.Set;
  * Replacement Keyboard
  */
 public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeListener,
-        StenoMachine.OnStrokeListener, Dictionary.OnDictionaryLoadedListener {
+        StenoMachine.OnStrokeListener, Dictionary.OnDictionaryLoadedListener, TextToSpeech.OnInitListener {
 
     private static final String STENO_STROKE = "com.brentandjody.STENO_STROKE";
     private static final String TAG = StenoIME.class.getSimpleName();
@@ -86,6 +90,10 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
 
     private PerformanceItem stats = new PerformanceItem();
 
+    private TextToSpeech mTts;
+    private StringBuilder mCurrentSentence;
+    private List<String> mSentenceEndCharacters;
+
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate()");
@@ -97,6 +105,12 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false); //load default values
         resetStats();
         //TXBOLT:mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        mTts = new TextToSpeech(this, this);
+        mCurrentSentence = new StringBuilder();
+        mSentenceEndCharacters = new ArrayList<String>();
+        mSentenceEndCharacters.add("?");
+        mSentenceEndCharacters.add("!");
+        mSentenceEndCharacters.add(".");
     }
 
     @Override
@@ -469,7 +483,7 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
 
     private void initializeMachine() {
         Log.d(TAG, "initializeMachine()");
-        if (isKeyboardConnected()) {
+        if (isKeyboardConnected() || true) {
             setMachineType(StenoMachine.TYPE.KEYBOARD);
         } else {
             setMachineType(StenoMachine.TYPE.VIRTUAL);
@@ -598,12 +612,37 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         // deal with backspaces
         if (tr.getBackspaces()==-1) {  // this is a special signal to remove the prior word
             smartDelete(connection);
+            int lastWord = mCurrentSentence.lastIndexOf(" ");
+            if (lastWord != -1){
+                mCurrentSentence.delete(lastWord, mCurrentSentence.length());
+            }else{
+                mCurrentSentence.delete(0, mCurrentSentence.length());
+            }
         } else if (tr.getBackspaces() > 0) {
             connection.deleteSurroundingText(tr.getBackspaces(), 0);
             stats.addLetters(-tr.getBackspaces());
         }
-        connection.commitText(tr.getText(), 1);
-        stats.addLetters(tr.getText().length());
+
+        String text = tr.getText();
+        connection.commitText(text, 1);
+        stats.addLetters(text.length());
+        if (!text.equals("")){
+            mCurrentSentence.append(text);
+            boolean endSentence = false;
+            for (String endChar : mSentenceEndCharacters){
+                if (text.contains(endChar)) {
+                    mTts.speak(mCurrentSentence.toString(), TextToSpeech.QUEUE_FLUSH, null);
+                    mCurrentSentence.delete(0, mCurrentSentence.length());
+                    endSentence = true;
+                    break;
+                }
+            }
+            int spaceIdx = mCurrentSentence.toString().indexOf(' ');
+//            if (!endSentence && spaceIdx != -1){
+//                mTts.speak(mCurrentSentence.substring(0, spaceIdx-1), TextToSpeech.QUEUE_FLUSH, null);
+//                mCurrentSentence.delete(spaceIdx, mCurrentSentence.length());
+//            }
+        }
         //draw the preview
         if (inline_preview) {
             String p = tr.getPreview();
@@ -780,7 +819,7 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
 
     private void setMachineType(StenoMachine.TYPE t) {
         if (t==null) t= StenoMachine.TYPE.VIRTUAL;
-        if (App.getMachineType()==t) return; //short circuit
+        if (App.getMachineType() == t) return; //short circuit
         App.setMachineType(t);
         saveIntPreference(getString(R.string.key_machine_type), App.getMachineType().ordinal());
         switch (App.getMachineType()) {
@@ -846,5 +885,8 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         }
     };
 
+    public void onInit(int status){
+        mTts.setLanguage(Locale.US);
+    }
 
 }
