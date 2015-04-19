@@ -484,7 +484,7 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
 
     private void initializeMachine() {
         Log.d(TAG, "initializeMachine()");
-        if (isKeyboardConnected()) {
+        if (isKeyboardConnected() || true) {
             setMachineType(StenoMachine.TYPE.KEYBOARD);
         } else {
             setMachineType(StenoMachine.TYPE.VIRTUAL);
@@ -613,13 +613,7 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         // deal with backspaces
         if (tr.getBackspaces()==-1) {  // this is a special signal to remove the prior word
             smartDelete(connection);
-            int lastWord = mCurrentSentence.lastIndexOf(" ");
-            if (lastWord != -1){
-                mCurrentSentence.delete(lastWord, mCurrentSentence.length());
-            }else{
-                mCurrentSentence.delete(0, mCurrentSentence.length());
-            }
-        } else if (tr.getBackspaces() > 0) {
+        } else if (tr.getBackspaces() > 1) {
             connection.deleteSurroundingText(tr.getBackspaces(), 0);
             stats.addLetters(-tr.getBackspaces());
         }
@@ -627,26 +621,12 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
         String text = tr.getText();
         connection.commitText(text, 1);
         stats.addLetters(text.length());
-        if (App.getTts() && !text.equals("")){
-            mCurrentSentence.append(text);
-            boolean endSentence = false;
-            for (String endChar : mSentenceEndCharacters){
-                if (text.contains(endChar)) {
-                    mTts.speak(mCurrentSentence.toString(), TextToSpeech.QUEUE_FLUSH, null);
-                    mCurrentSentence.delete(0, mCurrentSentence.length());
-                    endSentence = true;
-                    break;
-                }
-            }
-            int spaceIdx = mCurrentSentence.toString().indexOf(' ');
-//            if (!endSentence && spaceIdx != -1){
-//                mTts.speak(mCurrentSentence.substring(0, spaceIdx-1), TextToSpeech.QUEUE_FLUSH, null);
-//                mCurrentSentence.delete(spaceIdx, mCurrentSentence.length());
-//            }
-        }
         //draw the preview
         if (inline_preview) {
             String p = tr.getPreview();
+            if (p.length() > 0){
+                text = p;
+            }
             if (mTranslator instanceof SimpleTranslator) {
                 int bs = ((SimpleTranslator) mTranslator).preview_backspaces();
                 redo_space=(bs > 0);
@@ -656,7 +636,42 @@ public class StenoIME extends InputMethodService implements TouchLayer.OnStrokeL
             connection.commitText(p, 1);
             preview_length = p.length();
         }
+        if (!containsBackspace(tr) && App.getTts() && !text.equals("")) {
+//            hacky trying to detect suffix changes, doesn't work/needs better approach
+//            String[] words = mCurrentSentence.toString().split("\\s+");
+//
+//            String lastWord = words[words.length-1];
+//            if (!lastWord.equals("") && text.indexOf(lastWord) != -1){
+//                String newSentence = TextUtils.join(" ", words);
+//                mCurrentSentence = new StringBuilder(newSentence);
+//            }else{
+//                mCurrentSentence.append(text);
+//            }
+
+            int spaceIdx = mCurrentSentence.toString().lastIndexOf(' ', mCurrentSentence.length() - 2);
+            boolean endSentence = false;
+            for (String endChar : mSentenceEndCharacters){
+                if (text.contains(endChar)) {
+                    endSentence = true;
+                    break;
+                }
+            }
+            if (!endSentence){ //it sends last work again with punctuation so don't add it
+                mCurrentSentence.append(text);
+            }
+            if ((!endSentence && spaceIdx != -1)){
+                mTts.speak(mCurrentSentence.substring(0, spaceIdx), TextToSpeech.QUEUE_ADD, null);
+                mCurrentSentence.delete(0, spaceIdx);
+            }else if (endSentence){
+                mTts.speak(mCurrentSentence.toString(), TextToSpeech.QUEUE_ADD, null);
+                mCurrentSentence.delete(0, mCurrentSentence.length());
+            }
+        }
         connection.endBatchEdit();
+    }
+
+    private boolean containsBackspace(TranslationResult tr){
+        return tr.getBackspaces() > 1 || tr.getBackspaces() == -1;
     }
 
     private void smartDelete(InputConnection connection) {
